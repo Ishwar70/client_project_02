@@ -7,23 +7,32 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000
 });
 
 const sendEmail = async (to, subject, data, isClient = false) => {
-  const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
+  try {
+    const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
 
-  const html = await ejs.renderFile(templatePath, {
-    data,
-    isClient
-  });
+    const html = await ejs.renderFile(templatePath, {
+      data,
+      isClient
+    });
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    html
-  });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html
+    });
+
+    console.log(`✅ Email sent to ${to}`);
+  } catch (error) {
+    console.error(`❌ Email error for ${to}:`, error.message);
+  }
 };
 
 module.exports = sendEmail;

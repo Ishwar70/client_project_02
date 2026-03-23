@@ -1,8 +1,8 @@
 {
   "name": "client_project_02",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend server for client project",
+  "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
@@ -11,6 +11,10 @@
     "type": "git",
     "url": "git+https://github.com/Ishwar70/client_project_02.git"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^16.0.0",
@@ -22,10 +26,6 @@
   "devDependencies": {
     "nodemon": "^3.0.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Ishwar70/client_project_02/issues"
   },

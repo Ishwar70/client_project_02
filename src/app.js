@@ -1,12 +1,16 @@
 const express = require('express');
 const path = require('path');
-const connectDB = require('./config/db');
+const cors = require('cors');
 
 const enquiryRoutes = require('./routes/enquiry.routes');
 
 const app = express();
 
-connectDB();
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

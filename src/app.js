@@ -6,6 +6,8 @@ const enquiryRoutes = require('./routes/enquiry.routes');
 
 const app = express();
 
+// https://client-project-01-six.vercel.app
+
 // ✅ CORS (change for production)
 app.use(cors({
   origin: ['https://client-project-01-six.vercel.app'],
@@ -22,6 +24,6 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Routes
-app.use('/api', enquiryRoutes);
+app.use('/', enquiryRoutes);
 
 module.exports = app;

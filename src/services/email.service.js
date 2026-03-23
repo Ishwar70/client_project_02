@@ -28,8 +28,6 @@ const sendEmail = async (to, subject, data, isClient = false) => {
       subject,
       html
     });
-
-    console.log(`✅ Email sent to ${to}`);
   } catch (error) {
     console.error(`❌ Email error for ${to}:`, error.message);
   }

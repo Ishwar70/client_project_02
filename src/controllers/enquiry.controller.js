@@ -4,8 +4,6 @@ exports.submitForm = async (req, res) => {
   try {
     const data = req.body;
 
-    console.log("📩 Request received");
-
     // ✅ Send response immediately (NO timeout now)
     res.status(200).json({
       success: true,

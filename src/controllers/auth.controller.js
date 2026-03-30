@@ -2,12 +2,12 @@ import User from "../models/user.model.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { compareOtp } from "../utils/otp.js";
 import { sendOtp } from "../services/otp.service.js";
+import { generateToken } from "../utils/jwt.js";
 
 /* ================= REGISTER ================= */
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     let user = await User.findOne({ email });
 
     if (user && user.isVerified)
@@ -23,7 +23,6 @@ export const register = async (req, res) => {
     }
 
     await sendOtp(email, "verify");
-
     res.json({ msg: "OTP sent for verification" });
   } catch {
     res.status(500).json({ msg: "Server error" });
@@ -34,7 +33,6 @@ export const register = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
     const user = await User.findOne({ email });
 
     if (!user || !user.otpHash)
@@ -44,17 +42,21 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ msg: "OTP expired" });
 
     const isMatch = await compareOtp(otp, user.otpHash);
-
-    if (!isMatch)
-      return res.status(400).json({ msg: "Invalid OTP" });
+    if (!isMatch) return res.status(400).json({ msg: "Invalid OTP" });
 
     user.isVerified = true;
     user.otpHash = undefined;
     user.otpExpires = undefined;
-
     await user.save();
 
-    res.json({ msg: "Account verified ✅" });
+    // Generate JWT after verification
+    const token = generateToken(user._id);
+
+    res.json({ 
+      msg: "Account verified ✅", 
+      token, 
+      user: { id: user._id, name: user.name, email: user.email } 
+    });
   } catch {
     res.status(500).json({ msg: "Server error" });
   }
@@ -64,21 +66,32 @@ export const verifyOtp = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
 
-    if (!user)
-      return res.status(400).json({ msg: "User not found" });
-
-    if (!user.isVerified)
-      return res.status(400).json({ msg: "Verify account first" });
+    if (!user) return res.status(400).json({ msg: "User not found" });
+    if (!user.isVerified) return res.status(400).json({ msg: "Verify account first" });
 
     const match = await comparePassword(password, user.password);
+    if (!match) return res.status(400).json({ msg: "Wrong password" });
 
-    if (!match)
-      return res.status(400).json({ msg: "Wrong password" });
+    // Generate JWT
+    const token = generateToken(user._id);
 
-    res.json({ msg: "Login successful 🎉" });
+    res.json({ 
+      msg: "Login successful 🎉", 
+      token,
+      user: { id: user._id, name: user.name, email: user.email } 
+    });
+  } catch {
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+/* ================= GET CURRENT USER ================= */
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user).select("-password");
+    res.json(user);
   } catch {
     res.status(500).json({ msg: "Server error" });
   }
@@ -88,14 +101,10 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
-
-    if (!user)
-      return res.status(400).json({ msg: "Email not registered" });
+    if (!user) return res.status(400).json({ msg: "Email not registered" });
 
     await sendOtp(email, "reset");
-
     res.json({ msg: "Reset OTP sent" });
   } catch {
     res.status(500).json({ msg: "Server error" });
@@ -106,7 +115,6 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
-
     const user = await User.findOne({ email });
 
     if (!user || !user.resetOtpHash)
@@ -116,14 +124,11 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ msg: "OTP expired" });
 
     const isMatch = await compareOtp(otp, user.resetOtpHash);
-
-    if (!isMatch)
-      return res.status(400).json({ msg: "Invalid OTP" });
+    if (!isMatch) return res.status(400).json({ msg: "Invalid OTP" });
 
     user.password = await hashPassword(newPassword);
     user.resetOtpHash = undefined;
     user.resetOtpExpires = undefined;
-
     await user.save();
 
     res.json({ msg: "Password reset successful 🔐" });

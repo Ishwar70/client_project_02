@@ -136,3 +136,16 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+/* ================= LOGOUT ================= */
+export const logout = async (req, res) => {
+  try {
+    // Nothing to delete in DB (JWT is stateless)
+
+    res.json({
+      msg: "Logged out successfully ✅"
+    });
+  } catch {
+    res.status(500).json({ msg: "Server error" });
+  }
+};

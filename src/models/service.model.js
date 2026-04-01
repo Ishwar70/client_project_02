@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop";
@@ -12,6 +13,12 @@ const serviceSchema = new mongoose.Schema(
       maxlength: [100, "Title cannot exceed 100 characters"],
     },
 
+    slug: {
+      type: String,
+      unique: true,
+      lowercase: true,
+    },
+
     description: {
       type: String,
       required: [true, "Service description is required"],
@@ -20,14 +27,37 @@ const serviceSchema = new mongoose.Schema(
     },
 
     price: {
-      type: String,
+      type: Number,
       required: [true, "Price is required"],
-      trim: true,
+      min: [0, "Price cannot be negative"],
+    },
+
+    category: {
+      type: String,
+      enum: [
+        "Adventure",
+        "Cultural",
+        "Hospitality",
+        "Transport",
+        "Guided Tour",
+        "Custom",
+        "adventure",
+        "cultural",
+        "hospitality",
+        "transport",
+        "guided tour",
+        "custom"
+      ]
     },
 
     image: {
-      type: String,
-      default: DEFAULT_IMAGE, 
+      url: {
+        type: String,
+        default: DEFAULT_IMAGE,
+      },
+      public_id: {
+        type: String,
+      },
     },
 
     icon: {
@@ -35,10 +65,43 @@ const serviceSchema = new mongoose.Schema(
       enum: ["landmark", "mountain", "hotel", "map", "users", "car"],
       default: "landmark",
     },
+
+    ratings: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,
   }
 );
+
+
+// 🔥 Auto-generate slug before saving
+serviceSchema.pre("save", function (next) {
+  if (!this.isModified("title")) return next();
+  this.slug = slugify(this.title, { lower: true });
+  next();
+});
+
+// 🔥 Indexing for faster search
+serviceSchema.index({ title: "text", description: "text" });
 
 export default mongoose.model("Service", serviceSchema);

@@ -1,53 +1,96 @@
 import Service from "../models/service.model.js";
+import cloudinary from "../config/cloudinary.js";
 
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop";
+/* ================= FORMAT CATEGORY ================= */
+const formatCategory = (category) => {
+  if (!category) return "";
 
+  return category
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
+/* ================= GENERATE UNIQUE SLUG ================= */
+const generateUniqueSlug = async (title) => {
+  let baseSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-");
+
+  let slug = baseSlug;
+  let count = 1;
+
+  while (await Service.findOne({ slug })) {
+    slug = `${baseSlug}-${count}`;
+    count++;
+  }
+
+  return slug;
+};
 
 /* ================= CREATE SERVICE ================= */
 export const createService = async (req, res) => {
   try {
-    const { title, description, price, icon } = req.body;
+    const { title, description, price, category, icon } = req.body;
 
-    const image = req.file
-      ? req.file.path
-      : req.body.image || DEFAULT_IMAGE;
+    const formattedCategory = formatCategory(category);
+    const slug = await generateUniqueSlug(title); // ✅ FIXED
 
-    const newService = await Service.create({
+    let imageData = {};
+
+    if (req.file) {
+      imageData = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+
+    const service = await Service.create({
       title,
       description,
       price,
+      category: formattedCategory,
       icon,
-      image,
+      slug, // ✅ UNIQUE SLUG
+      image: imageData,
     });
+
     res.status(201).json({
       success: true,
       message: "Service created successfully",
-      data: newService,
+      service,
     });
-  } catch (err) {
+
+  } catch (error) {
+    console.error("❌ CREATE ERROR:", error);
+
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to create service",
+      message: "Error creating service",
+      error: error.message,
     });
   }
 };
 
 /* ================= GET ALL SERVICES ================= */
-export const getServices = async (req, res) => {
+export const getAllServices = async (req, res) => {
   try {
-    const services = await Service.find().sort({ createdAt: -1 });
+    const services = await Service.find({ isActive: true })
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       count: services.length,
-      data: services,
+      services,
     });
-  } catch (err) {
+
+  } catch (error) {
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to fetch services",
+      message: "Error fetching services",
+      error: error.message,
     });
   }
 };
@@ -57,7 +100,7 @@ export const getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
 
-    if (!service) {
+    if (!service || !service.isActive) {
       return res.status(404).json({
         success: false,
         message: "Service not found",
@@ -66,12 +109,14 @@ export const getServiceById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: service,
+      service,
     });
-  } catch (err) {
+
+  } catch (error) {
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to fetch service",
+      message: "Error fetching service",
+      error: error.message,
     });
   }
 };
@@ -88,38 +133,52 @@ export const updateService = async (req, res) => {
       });
     }
 
-    const updateData = {
-      title: req.body.title,
-      description: req.body.description,
-      price: req.body.price,
-      icon: req.body.icon,
-    };
-
-    // ✅ Handle image properly
-    if (req.file) {
-      updateData.image = req.file.path;
-    } else if (req.body.image) {
-      updateData.image = req.body.image;
+    // ✅ Update category safely
+    if (req.body.category) {
+      service.category = formatCategory(req.body.category);
     }
 
-    const updatedService = await Service.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
+    // ✅ Update slug if title changes
+    if (req.body.title && req.body.title !== service.title) {
+      service.slug = await generateUniqueSlug(req.body.title);
+      service.title = req.body.title;
+    }
+
+    // 🔥 Replace image
+    if (req.file) {
+      if (service.image?.public_id) {
+        await cloudinary.uploader.destroy(service.image.public_id);
       }
-    );
+
+      service.image = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+
+    // ✅ Update remaining fields
+    const fields = ["description", "price", "icon"];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        service[field] = req.body[field];
+      }
+    });
+
+    await service.save();
 
     res.status(200).json({
       success: true,
       message: "Service updated successfully",
-      data: updatedService,
+      service,
     });
-  } catch (err) {
+
+  } catch (error) {
+    console.error("❌ UPDATE ERROR:", error);
+
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to update service",
+      message: "Error updating service",
+      error: error.message,
     });
   }
 };
@@ -136,16 +195,27 @@ export const deleteService = async (req, res) => {
       });
     }
 
-    await service.deleteOne();
+    // 🔥 Delete image from Cloudinary
+    if (service.image?.public_id) {
+      await cloudinary.uploader.destroy(service.image.public_id);
+    }
+
+    // ✅ Soft delete
+    service.isActive = false;
+    await service.save();
 
     res.status(200).json({
       success: true,
       message: "Service deleted successfully",
     });
-  } catch (err) {
+
+  } catch (error) {
+    console.error("❌ DELETE ERROR:", error);
+
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to delete service",
+      message: "Error deleting service",
+      error: error.message,
     });
   }
 };

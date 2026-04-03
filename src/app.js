@@ -22,6 +22,13 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "🚀 Server is running successfully!",
+  });
+});
+
 app.use("/api/form", formRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);

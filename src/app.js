@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import packageRoutes from "./routes/package.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import destinationRoutes from "./routes/destination.routes.js";
 
 const app = express();
 
@@ -26,5 +27,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/destinations", destinationRoutes);
 
 export default app;

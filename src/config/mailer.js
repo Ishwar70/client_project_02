@@ -1,14 +1,26 @@
 import nodemailer from "nodemailer";
 
+let transporter;
+
 export const getTransporter = () => {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+  if (transporter) return transporter;
+
+  transporter = nodemailer.createTransport({
+    service: "gmail",
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      pass: process.env.EMAIL_PASS, 
     },
-    connectionTimeout: 10000,
   });
+
+  return transporter;
+};
+
+export const verifyMailer = async () => {
+  try {
+    await getTransporter().verify();
+    console.log("✅ Mail server ready");
+  } catch (err) {
+    console.error("❌ Mail server error:", err.message);
+  }
 };

@@ -8,24 +8,46 @@ import { generateToken } from "../utils/jwt.js";
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    // 🔍 Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
     let user = await User.findOne({ email });
 
-    if (user && user.isVerified)
+    if (user && user.isVerified) {
       return res.status(400).json({ msg: "User already exists" });
+    }
 
     const hashed = await hashPassword(password);
 
     if (!user) {
-      await User.create({ name, email, password: hashed });
+      user = await User.create({ name, email, password: hashed });
     } else {
       user.password = hashed;
       await user.save();
     }
 
-    await sendOtp(email, "verify");
-    res.json({ msg: "OTP sent for verification" });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+    // 🔥 OTP send wrapped safely
+    try {
+      await sendOtp(email, "verify");
+    } catch (otpError) {
+      console.error("OTP ERROR:", otpError);
+      return res.status(500).json({
+        msg: "User created but OTP failed",
+        error: otpError.message,
+      });
+    }
+
+    res.status(200).json({ msg: "OTP sent for verification ✅" });
+
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({
+      msg: "Server error",
+      error: error.message,
+    });
   }
 };
 
@@ -33,32 +55,48 @@ export const register = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ msg: "Email and OTP required" });
+    }
+
     const user = await User.findOne({ email });
 
-    if (!user || !user.otpHash)
+    if (!user || !user.otpHash) {
       return res.status(400).json({ msg: "No OTP found" });
+    }
 
-    if (user.otpExpires < new Date())
+    if (user.otpExpires < new Date()) {
       return res.status(400).json({ msg: "OTP expired" });
+    }
 
     const isMatch = await compareOtp(otp, user.otpHash);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid OTP" });
+
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid OTP" });
+    }
 
     user.isVerified = true;
     user.otpHash = undefined;
     user.otpExpires = undefined;
+
     await user.save();
 
-    // Generate JWT after verification
     const token = generateToken(user._id);
 
-    res.json({ 
-      msg: "Account verified ✅", 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email } 
+    res.json({
+      msg: "Account verified ✅",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
     });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+
+  } catch (error) {
+    console.error("VERIFY OTP ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
@@ -66,24 +104,36 @@ export const verifyOtp = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Email & password required" });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) return res.status(400).json({ msg: "User not found" });
-    if (!user.isVerified) return res.status(400).json({ msg: "Verify account first" });
+    if (!user.isVerified)
+      return res.status(400).json({ msg: "Verify account first" });
 
     const match = await comparePassword(password, user.password);
+
     if (!match) return res.status(400).json({ msg: "Wrong password" });
 
-    // Generate JWT
     const token = generateToken(user._id);
 
-    res.json({ 
-      msg: "Login successful 🎉", 
+    res.json({
+      msg: "Login successful 🎉",
       token,
-      user: { id: user._id, name: user.name, email: user.email } 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
     });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
@@ -92,8 +142,9 @@ export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user).select("-password");
     res.json(user);
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+  } catch (error) {
+    console.error("GET ME ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
@@ -101,13 +152,18 @@ export const getMe = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ msg: "Email not registered" });
+    if (!user)
+      return res.status(400).json({ msg: "Email not registered" });
 
     await sendOtp(email, "reset");
-    res.json({ msg: "Reset OTP sent" });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+
+    res.json({ msg: "Reset OTP sent 📩" });
+
+  } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
@@ -115,37 +171,41 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
+
     const user = await User.findOne({ email });
 
-    if (!user || !user.resetOtpHash)
+    if (!user || !user.resetOtpHash) {
       return res.status(400).json({ msg: "Invalid request" });
+    }
 
-    if (user.resetOtpExpires < new Date())
+    if (user.resetOtpExpires < new Date()) {
       return res.status(400).json({ msg: "OTP expired" });
+    }
 
     const isMatch = await compareOtp(otp, user.resetOtpHash);
+
     if (!isMatch) return res.status(400).json({ msg: "Invalid OTP" });
 
     user.password = await hashPassword(newPassword);
     user.resetOtpHash = undefined;
     user.resetOtpExpires = undefined;
+
     await user.save();
 
     res.json({ msg: "Password reset successful 🔐" });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
 /* ================= LOGOUT ================= */
 export const logout = async (req, res) => {
   try {
-    // Nothing to delete in DB (JWT is stateless)
-
-    res.json({
-      msg: "Logged out successfully ✅"
-    });
-  } catch {
-    res.status(500).json({ msg: "Server error" });
+    res.json({ msg: "Logged out successfully ✅" });
+  } catch (error) {
+    console.error("LOGOUT ERROR:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };

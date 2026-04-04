@@ -31,7 +31,7 @@ const postSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["Tech", "Travel", "Food", "Lifestyle", "Business"],
+      enum: ["Adventure", "Pilgrimage", "Tips & Guides", "Hill Stations"],
     },
 
     image: {

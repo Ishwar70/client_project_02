@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enquiry Received</title>
     <style>
+        /* Base styles for email clients */
         body {
             margin: 0;
             padding: 0;
-            background-color: #fdf8ec;
+            background-color: #fdf8ec; /* Matches your LIGHT constant */
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
@@ -16,7 +17,7 @@
             width: 100%;
             table-layout: fixed;
             background-color: #fdf8ec;
-            padding: 40px 0;
+            padding-bottom: 40px;
         }
         .main {
             background-color: #ffffff;
@@ -60,31 +61,20 @@
             background-color: #fdf8ec;
             border: 1px solid #e7e5e4;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             margin: 25px 0;
             text-align: left;
         }
         .detail-item {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-size: 13px;
-            border-bottom: 1px solid rgba(191, 161, 59, 0.1);
-            padding-bottom: 8px;
-        }
-        .detail-item:last-child {
-            border-bottom: none;
         }
         .label {
             color: #BFA13B;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .value {
-            color: #1c1917;
-            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 1px;
         }
         .footer {
             text-align: center;
@@ -98,49 +88,39 @@
 </head>
 <body>
     <center class="wrapper">
-        <table class="main">
+        <table class="main" width="100%">
             <tr><td class="header-bar"></td></tr>
             
             <tr>
                 <td class="content">
-                    <h1>Hi <%= data.name %> 👋</h1>
+                    <h1>Thank You</h1>
                     <div class="ornament"></div>
                     
-                    <p>Thank you for connecting with us! We have successfully received your request. Our concierge team is currently reviewing your details to ensure a bespoke experience.</p>
+                    <p>Dear <strong><%= data.name %></strong>,</p>
+                    <p>We have successfully received your enquiry. Our concierge team has been notified and is currently reviewing your request.</p>
                     
                     <div class="details-box">
                         <div class="detail-item">
-                            <span class="label">Destination</span>
-                            <span class="value"><%= data.place %></span>
+                            <span class="label">Reference Name:</span><br>
+                            <%= data.name %>
                         </div>
                         <div class="detail-item">
-                            <span class="label">Preferred Date</span>
-                            <span class="value"><%= data.date %></span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label">Guests</span>
-                            <span class="value"><%= data.passengers %> Passengers</span>
-                        </div>
-                        <div class="detail-item" style="border: none;">
-                            <span class="label">Your Message</span>
-                            <i style="color: #78716c;">"<%= data.message %>"</i>
+                            <span class="label">Your Message:</span><br>
+                            <i style="color: #78716c;">"<%= data.query %>"</i>
                         </div>
                     </div>
 
-                    <p>A specialist will reach out to you shortly at <strong><%= data.phone %></strong>. If your query is urgent, feel free to reply directly to this email.</p>
+                    <p>A specialist will reach out to you shortly via <strong><%= data.phone %></strong> to discuss the next steps.</p>
                     
-                    <p style="margin-top: 40px; font-weight: bold; color: #1c1917; margin-bottom: 5px;">
-                        Best Regards,
-                    </p>
-                    <p style="margin-top: 0; color: #8e7421; font-style: italic;">
-                        The Luxury Concierge Team
+                    <p style="margin-top: 30px; font-style: italic; color: #8e7421;">
+                        Refined service, tailored for you.
                     </p>
                 </td>
             </tr>
             
             <tr>
                 <td class="footer">
-                    &copy; <%= new Date().getFullYear() %> REFINED SERVICE • TAILORED FOR YOU
+                    &copy; <%= new Date().getFullYear() %> Luxury Concierge Team
                 </td>
             </tr>
         </table>

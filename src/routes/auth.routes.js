@@ -1,7 +1,6 @@
 import express from "express";
 import {
   register,
-  verifyOtp,
   login,
   getMe,
   forgotPassword,
@@ -10,23 +9,19 @@ import {
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
-import { otpLimiter } from "../middlewares/rateLimit.js";
 
 const router = express.Router();
 
 /* ================= PUBLIC ROUTES ================= */
 
-// Register + Send OTP
-router.post("/register", otpLimiter, register);
-
-// Verify OTP
-router.post("/verify-otp", verifyOtp);
+// Register
+router.post("/register", register);
 
 // Login
 router.post("/login", login);
 
-// Forgot Password (send reset OTP)
-router.post("/forgot-password", otpLimiter, forgotPassword);
+// Forgot Password
+router.post("/forgot-password", forgotPassword);
 
 // Reset Password
 router.post("/reset-password", resetPassword);
@@ -37,7 +32,7 @@ router.post("/reset-password", resetPassword);
 // Get current logged-in user
 router.get("/me", protect, getMe);
 
-// Logout (client-side mainly)
+// Logout
 router.post("/logout", protect, logout);
 
 export default router;

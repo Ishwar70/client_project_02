@@ -6,6 +6,7 @@ import serviceRoutes from "./routes/service.routes.js";
 import packageRoutes from "./routes/package.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import destinationRoutes from "./routes/destination.routes.js";
+import enquiryRoutes from "./routes/enquiry.route.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/form", formRoutes);
+app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/packages", packageRoutes);

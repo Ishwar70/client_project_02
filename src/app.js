@@ -7,6 +7,7 @@ import packageRoutes from "./routes/package.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import destinationRoutes from "./routes/destination.routes.js";
 import enquiryRoutes from "./routes/enquiry.route.js";
+import testimonialRoutes from "./routes/testimonial.routes.js";
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/destinations", destinationRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 
 export default app;

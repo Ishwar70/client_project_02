@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enquiry Received</title>
     <style>
-        /* Base styles for email clients */
         body {
             margin: 0;
             padding: 0;
-            background-color: #fdf8ec; /* Matches your LIGHT constant */
+            background-color: #fdf8ec; 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
@@ -58,23 +57,37 @@
             color: #57534e;
         }
         .details-box {
-            background-color: #fdf8ec;
+            background-color: #fafaf9;
             border: 1px solid #e7e5e4;
             border-radius: 16px;
-            padding: 20px;
+            padding: 25px;
             margin: 25px 0;
             text-align: left;
         }
+        .detail-grid {
+            width: 100%;
+            margin-bottom: 15px;
+        }
         .detail-item {
-            margin-bottom: 10px;
-            font-size: 13px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #e7e5e4;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
         }
         .label {
             color: #BFA13B;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 10px;
             letter-spacing: 1px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .value {
+            font-size: 14px;
+            color: #1c1917;
         }
         .footer {
             text-align: center;
@@ -93,27 +106,50 @@
             
             <tr>
                 <td class="content">
-                    <h1>Thank You</h1>
+                    <h1>Journey Details</h1>
                     <div class="ornament"></div>
                     
                     <p>Dear <strong><%= data.name %></strong>,</p>
-                    <p>We have successfully received your enquiry. Our concierge team has been notified and is currently reviewing your request.</p>
+                    <p>Thank you for choosing us for your next adventure. Our luxury travel desk has received your request and is crafting a customized itinerary for you.</p>
                     
                     <div class="details-box">
                         <div class="detail-item">
-                            <span class="label">Reference Name:</span><br>
-                            <%= data.name %>
+                            <span class="label">Destination</span>
+                            <span class="value"><strong><%= data.location %></strong></span>
                         </div>
+                        
+                        <% if(data.departCity) { %>
                         <div class="detail-item">
-                            <span class="label">Your Message:</span><br>
-                            <i style="color: #78716c;">"<%= data.query %>"</i>
+                            <span class="label">Departing From</span>
+                            <span class="value"><%= data.departCity %></span>
                         </div>
+                        <% } %>
+
+                        <div class="detail-item">
+                            <span class="label">Travel Date & Duration</span>
+                            <span class="value">
+                                <%= data.formattedDate %> 
+                                <% if(data.days) { %> • <%= data.days %> Days <% } %>
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="label">Travelers</span>
+                            <span class="value"><%= data.passengers %> Person(s)</span>
+                        </div>
+
+                        <% if(data.message) { %>
+                        <div class="detail-item">
+                            <span class="label">Your Specific Requirements</span>
+                            <span class="value"><i>"<%= data.message %>"</i></span>
+                        </div>
+                        <% } %>
                     </div>
 
-                    <p>A specialist will reach out to you shortly via <strong><%= data.phone %></strong> to discuss the next steps.</p>
+                    <p>A specialist will reach out to you shortly at <strong><%= data.phone %></strong> or via email to finalize your luxury travel plan.</p>
                     
                     <p style="margin-top: 30px; font-style: italic; color: #8e7421;">
-                        Refined service, tailored for you.
+                        Exquisite journeys, flawlessly executed.
                     </p>
                 </td>
             </tr>

@@ -3,6 +3,6 @@ import { submitEnquiry } from "../controllers/enquiry.controller.js";
 
 const router = express.Router();
 
-router.post("/", submitEnquiry);
+router.post("/submit", submitEnquiry);
 
 export default router;

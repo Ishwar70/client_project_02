@@ -18,6 +18,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "http://localhost:5174",
       "https://client-project-01-six.vercel.app",
     ],
     credentials: true,

@@ -3,19 +3,27 @@ import { getTransporter } from "../config/mailer.js";
 import ejs from "ejs";
 import path from "path";
 
-// 🚀 MAIN CONTROLLER
 export const submitEnquiry = async (req, res) => {
   try {
-    // Spread the body and ensure all fields are present
-    const data = {
-      ...req.body,
-      // You can add default values here if needed, similar to your 'passengers' example
-      submittedAt: new Date().toLocaleString(),
-    };
+    const { 
+      name, email, phone, departCity, location, 
+      passengers, date, days, message, agreed 
+    } = req.body;
 
-    const newEnquiry = await Enquiry.create(data);
+    const newEnquiry = await Enquiry.create({
+      name,
+      email,
+      phone,
+      departCity,
+      location,
+      passengers: passengers || 1, 
+      date,
+      days,
+      message,
+      agreed
+    });
 
-    // ✅ Fast response to the frontend to stop the loading spinner
+    // ✅ Fast response to frontend
     res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully ✅",
@@ -23,9 +31,16 @@ export const submitEnquiry = async (req, res) => {
     });
 
     // 📧 Trigger emails in the background
-    sendEnquiryEmails(data);
+    // Pass the saved document (newEnquiry) so it has the DB timestamps/formatting
+    sendEnquiryEmails(newEnquiry);
 
   } catch (error) {
+    // Handle Mongoose validation errors specifically
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ success: false, error: messages });
+    }
+
     console.error("Controller Error:", error);
     res.status(500).json({ 
       success: false, 
@@ -34,31 +49,43 @@ export const submitEnquiry = async (req, res) => {
   }
 };
 
-// 📧 EMAIL FUNCTION
-const sendEnquiryEmails = async (data) => {
+
+const sendEnquiryEmails = async (enquiryData) => {
   try {
     const transporter = getTransporter();
 
-    // Resolve paths to your EJS templates
+    const templateData = {
+      ...enquiryData._doc,
+      formattedDate: new Date(enquiryData.date).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }),
+      submittedAt: new Date(enquiryData.createdAt).toLocaleString()
+    };
+
     const userTemplatePath = path.resolve("src/views/userEnquiryEmail.ejs");
     const adminTemplatePath = path.resolve("src/views/adminEnquiryEmail.ejs");
 
-    // Render templates with the form data
-    const userHtml = await ejs.renderFile(userTemplatePath, { data });
-    const adminHtml = await ejs.renderFile(adminTemplatePath, { data });
+    
+    const [userHtml, adminHtml] = await Promise.all([
+      ejs.renderFile(userTemplatePath, { data: templateData }),
+      ejs.renderFile(adminTemplatePath, { data: templateData })
+    ]);
 
     await Promise.all([
-      // 1. Send confirmation to the User
+
       transporter.sendMail({
-        from: `"Luxury Concierge" <${process.env.EMAIL_USER}>`,
-        to: data.email,
-        subject: "We've Received Your Enquiry",
+        from: `"Travel Concierge" <${process.env.EMAIL_USER}>`,
+        to: enquiryData.email,
+        subject: `Your trip to ${enquiryData.location} ✈️`,
         html: userHtml,
       }),
+
       transporter.sendMail({
-        from: `"System Alert" <${process.env.EMAIL_USER}>`,
+        from: `"Booking System" <${process.env.EMAIL_USER}>`,
         to: process.env.ADMIN_EMAIL,
-        subject: `🚨 New Enquiry from ${data.name}`,
+        subject: `🚨 New Enquiry: ${enquiryData.name} - ${enquiryData.location}`,
         html: adminHtml,
       }),
     ]);

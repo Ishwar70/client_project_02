@@ -12,6 +12,12 @@ const destinationSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Name too long"],
     },
+    
+    tagline: {
+      type: String,
+      trim: true,
+      maxlength: [150, "Tagline too long"],
+    },
 
     slug: {
       type: String,
@@ -21,18 +27,27 @@ const destinationSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: [
-        "Adventure",
-        "Pilgrimage",
-        "Wildlife",
-        "Hill Stations",
-        "Custom",
-        "adventure",
-        "pilgrimage",
-        "wildlife",
-        "hill stations",
-        "custom",
-      ],
+      trim: true,
+    },
+
+    country: {
+      type: String,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      trim: true,
+    },
+
+    city: {
+      type: String,
+      trim: true,
+    },
+
+    noOfPerson: {
+      type: Number,
+      default: 0,
     },
 
     region: {
@@ -45,6 +60,11 @@ const destinationSchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 5,
+    },
+
+    numReviews: {
+      type: Number,
+      default: 0,
     },
 
     altitude: String,
@@ -76,7 +96,7 @@ const destinationSchema = new mongoose.Schema(
 
     experience: {
       type: String,
-      enum: ["Adventure", "Pilgrimage", "Wildlife", "Hill Stations", "Custom"],
+      trim: true,
     },
 
     budget: {

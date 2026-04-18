@@ -45,6 +45,13 @@ export const createDestination = async (req, res) => {
       travelDate,
       experience,
       budget,
+      country,
+      state,
+      city,
+      noOfPerson,
+      numReviews,
+      isActive,
+      tagline,
     } = req.body;
 
     if (!name) {
@@ -76,11 +83,18 @@ export const createDestination = async (req, res) => {
       rating,
       altitude,
       bestTime,
+      tagline,
       description,
       featured,
       travelDate,
       experience,
       budget,
+      country,
+      state,
+      city,
+      noOfPerson: Number(noOfPerson) || 0,
+      numReviews: Number(numReviews) || 0,
+      isActive: isActive !== undefined ? isActive : true,
       image: imageData,
       createdBy: req.user?._id,
     });
@@ -121,15 +135,21 @@ export const getAllDestinations = async (req, res) => {
 
     let query = { isActive: true };
 
-    /* 🔍 TEXT SEARCH (uses index) */
+    /* 🔍 UNIFIED SEARCH (Title, City, State, Country, Region) */
     if (search) {
-      query.$text = { $search: search };
+      const searchRegex = new RegExp(search, "i");
+      query.$or = [
+        { name: searchRegex },
+        { city: searchRegex },
+        { state: searchRegex },
+        { country: searchRegex },
+        { region: searchRegex },
+      ];
     }
 
     /* 🎯 FILTERS */
-    if (experience) query.experience = experience;
-
-    if (category) query.category = formatCategory(category);
+    if (experience) query.experience = { $regex: new RegExp(experience, "i") };
+    if (category) query.category = { $regex: new RegExp(category, "i") };
 
     if (minBudget || maxBudget) {
       query.budget = {};
@@ -236,6 +256,7 @@ export const updateDestination = async (req, res) => {
     /* 🔧 OTHER FIELDS */
     const fields = [
       "region",
+      "tagline",
       "rating",
       "altitude",
       "bestTime",
@@ -244,11 +265,21 @@ export const updateDestination = async (req, res) => {
       "travelDate",
       "experience",
       "budget",
+      "country",
+      "state",
+      "city",
+      "noOfPerson",
+      "numReviews",
+      "isActive",
     ];
 
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        dest[field] = req.body[field];
+        if (field === "noOfPerson" || field === "budget" || field === "rating") {
+          dest[field] = Number(req.body[field]);
+        } else {
+          dest[field] = req.body[field];
+        }
       }
     });
 

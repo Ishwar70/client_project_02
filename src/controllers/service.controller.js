@@ -33,7 +33,10 @@ const generateUniqueSlug = async (title) => {
 /* ================= CREATE SERVICE ================= */
 export const createService = async (req, res) => {
   try {
-    const { title, description, price, category, icon } = req.body;
+    const { 
+      title, description, price, category, country, state, city, noOfPerson,
+      ratings, numReviews 
+    } = req.body;
 
     const formattedCategory = formatCategory(category);
     const slug = await generateUniqueSlug(title); // ✅ FIXED
@@ -52,7 +55,12 @@ export const createService = async (req, res) => {
       description,
       price,
       category: formattedCategory,
-      icon,
+      country,
+      state,
+      city,
+      noOfPerson: Number(noOfPerson) || 0,
+      ratings: Number(ratings) || 0,
+      numReviews: Number(numReviews) || 0,
       slug, // ✅ UNIQUE SLUG
       image: imageData,
     });
@@ -157,10 +165,14 @@ export const updateService = async (req, res) => {
     }
 
     // ✅ Update remaining fields
-    const fields = ["description", "price", "icon"];
+    const fields = ["description", "price", "country", "state", "city", "noOfPerson", "ratings", "numReviews"];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        service[field] = req.body[field];
+        if (field === "noOfPerson") {
+          service[field] = Number(req.body[field]);
+        } else {
+          service[field] = req.body[field];
+        }
       }
     });
 

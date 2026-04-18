@@ -8,9 +8,12 @@ const packageSchema = new mongoose.Schema(
     tripType: { 
       type: String, 
       required: true, 
-      enum: ["Adventure", "Hill Station", "Pilgrimage", "Wildlife", "Custom"] 
+      trim: true
     },
-    destinationName: { type: String, required: true, trim: true },
+    country: { type: String, trim: true },
+    state: { type: String, trim: true },
+    city: { type: String, trim: true },
+    noOfPerson: { type: Number, default: 0 },
     fromDate: { type: Date, required: true },
     toDate: { 
       type: Date, 
@@ -24,10 +27,9 @@ const packageSchema = new mongoose.Schema(
         message: "To date must be greater than or equal to from date",
       },
     },
-    travellers: { type: Number, required: true, min: 1, default: 1 },
     rating: { type: Number, default: 4.5, min: 0, max: 5 },
     includes: { type: [String], default: [] },
-    price: { type: String, default: "Custom" },
+    price: { type: Number, default: 0 },
     image: { type: String, default: DEFAULT_IMAGE },
     cloudinary_id: { type: String },
   },

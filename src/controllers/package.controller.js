@@ -6,10 +6,10 @@ const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1507525428034-b723cf961
 /* ================= CREATE ================= */
 export const createPackage = async (req, res) => {
   try {
-    const { title, tripType, destinationName, fromDate, toDate, travellers, includes, price, rating } = req.body;
+    const { title, tripType, fromDate, toDate, includes, price, rating, country, state, city, noOfPerson } = req.body;
 
     // 1. Basic Validation
-    if (!title || !tripType || !destinationName || !fromDate || !toDate || !travellers) {
+    if (!title || !tripType || !fromDate || !toDate || !noOfPerson) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
@@ -17,12 +17,15 @@ export const createPackage = async (req, res) => {
     const data = {
       title,
       tripType,
-      destinationName,
       fromDate: new Date(fromDate),
       toDate: new Date(toDate),
-      travellers: Number(travellers),
+      noOfPerson: Number(noOfPerson),
       rating: rating ? Number(rating) : 4.5,
-      price: price || "Custom",
+      price: Number(price) || 0,
+      country,
+      state,
+      city,
+      noOfPerson: Number(noOfPerson) || 0,
       // Handle "includes" if it's a string (from FormData) or already an array
       includes: Array.isArray(includes) ? includes : includes ? includes.split(',').map(i => i.trim()) : [],
     };
@@ -43,21 +46,29 @@ export const createPackage = async (req, res) => {
 /* ================= GET ALL (WITH ADVANCED FILTERS) ================= */
 export const getAllPackages = async (req, res) => {
   try {
-    const { destinationName, fromDate, toDate, travellers, tripType } = req.query;
+    const { fromDate, toDate, tripType, country, state, city, noOfPerson, search } = req.query;
     let query = {};
 
-    if (destinationName) {
-      query.destinationName = { $regex: destinationName, $options: "i" };
+    if (search) {
+      query.$or = [
+        { city: { $regex: search, $options: "i" } },
+        { state: { $regex: search, $options: "i" } },
+        { country: { $regex: search, $options: "i" } },
+        { title: { $regex: search, $options: "i" } }
+      ];
     }
 
     if (tripType && tripType !== "All Types" && tripType !== "") {
       query.tripType = tripType;
     }
-
-    if (travellers) {
-      const count = parseInt(travellers);
+    
+    if (country) query.country = { $regex: country, $options: "i" };
+    if (state) query.state = { $regex: state, $options: "i" };
+    if (city) query.city = { $regex: city, $options: "i" };
+    if (noOfPerson) {
+      const count = parseInt(noOfPerson);
       if (!isNaN(count)) {
-        query.travellers = { $gte: count }; // Show packages that fit AT LEAST this many people
+        query.noOfPerson = { $gte: count }; 
       }
     }
 
@@ -101,8 +112,8 @@ export const updatePackage = async (req, res) => {
       return res.status(400).json({ message: "To date cannot be earlier than From date" });
     }
 
-    // 2. Proper Type Casting
-    if (updatedData.travellers) updatedData.travellers = Number(updatedData.travellers);
+    if (updatedData.price !== undefined) updatedData.price = Number(updatedData.price) || 0;
+    if (updatedData.noOfPerson !== undefined) updatedData.noOfPerson = Number(updatedData.noOfPerson);
     if (updatedData.rating) updatedData.rating = Number(updatedData.rating);
     if (updatedData.includes) {
       updatedData.includes = Array.isArray(updatedData.includes) 

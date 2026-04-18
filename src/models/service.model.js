@@ -34,20 +34,27 @@ const serviceSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: [
-        "Adventure",
-        "Cultural",
-        "Hospitality",
-        "Transport",
-        "Guided Tour",
-        "Custom",
-        "adventure",
-        "cultural",
-        "hospitality",
-        "transport",
-        "guided tour",
-        "custom"
-      ]
+      trim: true,
+    },
+
+    country: {
+      type: String,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      trim: true,
+    },
+
+    city: {
+      type: String,
+      trim: true,
+    },
+
+    noOfPerson: {
+      type: Number,
+      default: 0,
     },
 
     image: {
@@ -60,11 +67,6 @@ const serviceSchema = new mongoose.Schema(
       },
     },
 
-    icon: {
-      type: String,
-      enum: ["landmark", "mountain", "hotel", "map", "users", "car"],
-      default: "landmark",
-    },
 
     ratings: {
       type: Number,
